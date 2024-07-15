@@ -29,21 +29,132 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-from pathlib             import Path
-from pyTooling.Packaging import DescribePythonPackageHostedOnGitHub, DEFAULT_CLASSIFIERS
+from textwrap           import dedent
 
-gitHubNamespace =        "edaa-org"
-packageName =            "pyEDAA.IPXACT"
-packageDirectory =       packageName.replace(".", "/")
-packageInformationFile = Path(f"{packageDirectory}/__init__.py")
+from pyTooling.Decorators import export
 
-DescribePythonPackageHostedOnGitHub(
-	packageName=packageName,
-	description="A Document-Object-Model (DOM) for IP-XACT files.",
-	gitHubNamespace=gitHubNamespace,
-	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
-	classifiers=list(DEFAULT_CLASSIFIERS) + [
-		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
-	]
-)
+from pyEDAA.IPXACT import RootElement, __DEFAULT_SCHEMA__, Vlnv
+
+
+@export
+class Design(RootElement):
+	"""Represents an IP-XACT design."""
+
+	def __init__(self, vlnv : Vlnv, description : str):
+		super().__init__(vlnv)
+
+		self._description =             description
+		self._componentInstances =      []
+		self._interconnections =        []
+		self._adHocConnections =        []
+
+	def AddItem(self, item):
+		if isinstance(item, ComponentInstance):   self._componentInstances.append(item)
+		elif isinstance(item, Interconnection):   self._interconnections.append(item)
+		elif isinstance(item, AdHocConnection):   self._adHocConnections.append(item)
+		else:
+			raise ValueError()
+
+	def ToXml(self):
+		"""Converts the object's data into XML format."""
+
+		buffer = dedent("""\
+			<?xml version="1.0" encoding="UTF-8"?>
+			<{xmlns}:design
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				xmlns:{xmlns}="{schemaUri}"
+				xsi:schemaLocation="{schemaUri} {schemaUrl}">
+			{versionedIdentifier}
+				<{xmlns}:description>{description}</{xmlns}:description>
+			""").format(
+				xmlns=__DEFAULT_SCHEMA__.NamespacePrefix,
+				schemaUri=__DEFAULT_SCHEMA__.SchemaUri,
+				schemaUrl=__DEFAULT_SCHEMA__.SchemaUrl,
+				versionedIdentifier=self._vlnv.ToXml(isVersionedIdentifier=True),
+				description=self._description
+			)
+
+		if self._componentInstances:
+			buffer += "\t<{xmlns}:componentInstances>\n"
+			for componentInstance in self._componentInstances:
+				buffer += componentInstance.ToXml(2)
+			buffer += "\t</{xmlns}:componentInstances>\n"
+
+		if self._interconnections:
+			buffer += "\t<{xmlns}:interconnections>\n"
+			for interconnection in self._interconnections:
+				buffer += interconnection.ToXml(2)
+			buffer += "\t</{xmlns}:interconnections>\n"
+
+		if self._adHocConnections:
+			buffer += "\t<{xmlns}:adHocConnections>\n"
+			for adHocConnection in self._adHocConnections:
+				buffer += adHocConnection.ToXml(2)
+			buffer += "\t</{xmlns}:adHocConnections>\n"
+
+		buffer += dedent("""\
+			</{xmlns}:design>
+			""")
+
+		return buffer.format(xmlns=__DEFAULT_SCHEMA__.NamespacePrefix)
+
+
+@export
+class IpxactFile:
+	def __init__(self, vlnv, name, description):
+		self._vlnv = vlnv
+		self._name = name
+		self._description = description
+
+	def ToXml(self, indent):
+		"""Converts the object's data into XML format."""
+
+		_indent = "\t" * indent
+		buffer = dedent("""\
+			{indent}<{xmlns}:ipxactFile>
+			{indent}	{vlnv}
+			{indent}	<{xmlns}:name>{path}</{xmlns}:name>
+			{indent}	<{xmlns}:description>{description}</{xmlns}:description>
+			{indent}</{xmlns}:ipxactFile>
+		""").format(indent=_indent, xmlns=__DEFAULT_SCHEMA__.NamespacePrefix, vlnv=self._vlnv.ToXml(0), path=self._name, description=self._description)
+
+		return buffer
+
+
+@export
+class ComponentInstance:
+	"""Represents an IP-XACT component instance."""
+
+	def __init__(self):
+		pass
+
+	def ToXml(self, indent=0):
+		"""Converts the object's data into XML format."""
+
+		return ""
+
+
+@export
+class Interconnection:
+	"""Represents an IP-XACT interconnection."""
+
+	def __init__(self):
+		pass
+
+	def ToXml(self, indent=0):
+		"""Converts the object's data into XML format."""
+
+		return ""
+
+
+@export
+class AdHocConnection:
+	"""Represents an IP-XACT ad-hoc connection."""
+
+	def __init__(self):
+		pass
+
+	def ToXml(self, indent=0):
+		"""Converts the object's data into XML format."""
+
+		return ""

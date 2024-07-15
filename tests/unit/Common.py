@@ -29,21 +29,27 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-from pathlib             import Path
-from pyTooling.Packaging import DescribePythonPackageHostedOnGitHub, DEFAULT_CLASSIFIERS
+"""Testcase for ``Catalog``."""
+from unittest     import TestCase
 
-gitHubNamespace =        "edaa-org"
-packageName =            "pyEDAA.IPXACT"
-packageDirectory =       packageName.replace(".", "/")
-packageInformationFile = Path(f"{packageDirectory}/__init__.py")
+from pyEDAA.IPXACT import Vlnv
 
-DescribePythonPackageHostedOnGitHub(
-	packageName=packageName,
-	description="A Document-Object-Model (DOM) for IP-XACT files.",
-	gitHubNamespace=gitHubNamespace,
-	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
-	classifiers=list(DEFAULT_CLASSIFIERS) + [
-		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
-	]
-)
+
+if __name__ == "__main__": # pragma: no cover
+	print("ERROR: you called a testcase declaration file as an executable module.")
+	print("Use: 'python -m unitest <testcase module>'")
+	exit(1)
+
+
+class VLNVs(TestCase):
+	def test_Vlnv(self):
+		vendor = "EDA²"
+		library = "pyEDAA"
+		name = "IPXACT"
+		version = "1.0"
+		vlnv = Vlnv(vendor, library, name, version)
+
+		self.assertEqual(vendor, vlnv.Vendor)
+		self.assertEqual(library, vlnv.Library)
+		self.assertEqual(name, vlnv.Name)
+		self.assertEqual(version, vlnv.Version)

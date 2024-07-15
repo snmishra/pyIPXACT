@@ -29,21 +29,33 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-from pathlib             import Path
-from pyTooling.Packaging import DescribePythonPackageHostedOnGitHub, DEFAULT_CLASSIFIERS
+"""Testcase for ``Catalog``."""
+from pathlib import Path
+from pytest       import mark
+from unittest     import TestCase
 
-gitHubNamespace =        "edaa-org"
-packageName =            "pyEDAA.IPXACT"
-packageDirectory =       packageName.replace(".", "/")
-packageInformationFile = Path(f"{packageDirectory}/__init__.py")
+from pyEDAA.IPXACT import Vlnv
+from pyEDAA.IPXACT.Catalog import Catalog
+from pyEDAA.IPXACT.Design  import IpxactFile
 
-DescribePythonPackageHostedOnGitHub(
-	packageName=packageName,
-	description="A Document-Object-Model (DOM) for IP-XACT files.",
-	gitHubNamespace=gitHubNamespace,
-	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
-	classifiers=list(DEFAULT_CLASSIFIERS) + [
-		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
-	]
-)
+
+if __name__ == "__main__": # pragma: no cover
+	print("ERROR: you called a testcase declaration file as an executable module.")
+	print("Use: 'python -m unitest <testcase module>'")
+	exit(1)
+
+
+class Catalogs(TestCase):
+	@mark.xfail(reason="This has a known issue.")
+	def test_Catalog(self):
+		vlnv = Vlnv("VLSI-EDA", "PoC", "PoC", "1.0")
+
+		catalog = Catalog(vlnv, "IP Core Library")
+		catalog.AddItem(IpxactFile(Vlnv(vendor=vlnv.Vendor, library=vlnv.Library, name="PoC.io.aurt.RX", version=vlnv.Version), "uart_RX.xml", "A UART receiver."))
+		catalog.AddItem(IpxactFile(Vlnv(vendor=vlnv.Vendor, library=vlnv.Library, name="PoC.io.aurt.TX", version=vlnv.Version), "uart_TX.xml", "A UART transmitter."))
+		catalog.AddItem(IpxactFile(Vlnv(vendor=vlnv.Vendor, library=vlnv.Library, name="PoC.io.aurt.Wrapper", version=vlnv.Version), "uart_RX.xml", "A UART wrapper."))
+
+	@mark.xfail(reason="This has a known issue.")
+	def test_ReadFromFile(self):
+		filePath = Path("catalog.xml")
+		catalog = Catalog.FromFile(filePath)

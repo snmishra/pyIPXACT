@@ -29,21 +29,4 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-from pathlib             import Path
-from pyTooling.Packaging import DescribePythonPackageHostedOnGitHub, DEFAULT_CLASSIFIERS
-
-gitHubNamespace =        "edaa-org"
-packageName =            "pyEDAA.IPXACT"
-packageDirectory =       packageName.replace(".", "/")
-packageInformationFile = Path(f"{packageDirectory}/__init__.py")
-
-DescribePythonPackageHostedOnGitHub(
-	packageName=packageName,
-	description="A Document-Object-Model (DOM) for IP-XACT files.",
-	gitHubNamespace=gitHubNamespace,
-	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
-	classifiers=list(DEFAULT_CLASSIFIERS) + [
-		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
-	]
-)
+"""Helper classes for unit tests."""

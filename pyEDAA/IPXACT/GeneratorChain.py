@@ -29,21 +29,115 @@
 # SPDX-License-Identifier: Apache-2.0                                                                                  #
 # ==================================================================================================================== #
 #
-from pathlib             import Path
-from pyTooling.Packaging import DescribePythonPackageHostedOnGitHub, DEFAULT_CLASSIFIERS
+from textwrap           import dedent
 
-gitHubNamespace =        "edaa-org"
-packageName =            "pyEDAA.IPXACT"
-packageDirectory =       packageName.replace(".", "/")
-packageInformationFile = Path(f"{packageDirectory}/__init__.py")
+from pyTooling.Decorators import export
 
-DescribePythonPackageHostedOnGitHub(
-	packageName=packageName,
-	description="A Document-Object-Model (DOM) for IP-XACT files.",
-	gitHubNamespace=gitHubNamespace,
-	sourceFileWithVersion=packageInformationFile,
-	developmentStatus="alpha",
-	classifiers=list(DEFAULT_CLASSIFIERS) + [
-		"Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)"
-	]
-)
+from pyEDAA.IPXACT import RootElement, __DEFAULT_SCHEMA__, Vlnv
+
+
+@export
+class GeneratorChain(RootElement):
+	"""Represents an IP-XACT generator chain."""
+
+	def __init__(self, vlnv : Vlnv, displayName : str, description : str, chainGroup):
+		"""Constructor"""
+
+		super().__init__(vlnv)
+
+		self._displayName =                   displayName
+		self._description =                   description
+		self._chainGroup =                    chainGroup
+		self._generatorChainSelector =        None
+		self._interconnectionConfiguration =  None
+		self._generator =                     None
+
+	def SetItem(self, item):
+		if isinstance(item,   GeneratorChainSelector):      self._generatorChainSelector =      item
+		elif isinstance(item, ComponentGeneratorSelector):  self._componentGeneratorSelector =  item
+		elif isinstance(item, Generator):                   self._generator =                   item
+		else:
+			raise ValueError()
+
+	def ToXml(self):
+		"""Converts the object's data into XML format."""
+
+		buffer = dedent("""\
+			<?xml version="1.0" encoding="UTF-8"?>
+			<{xmlns}:generatorChain
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				xmlns:{xmlns}="{schemaUri}"
+				xsi:schemaLocation="{schemaUri} {schemaUrl}">
+			{versionedIdentifier}
+				<{xmlns}:displayName>{displayName}</{xmlns}:displayName>
+				<{xmlns}:description>{description}</{xmlns}:description>
+				<{xmlns}:chainGroup>{chainGroup}</{xmlns}:chainGroup>
+			""").format(
+				xmlns=__DEFAULT_SCHEMA__.NamespacePrefix,
+				schemaUri=__DEFAULT_SCHEMA__.SchemaUri,
+				schemaUrl=__DEFAULT_SCHEMA__.SchemaUrl,
+				versionedIdentifier=self._vlnv.ToXml(isVersionedIdentifier=True),
+				displayName=self._displayName,
+				description=self._description,
+				chainGroup=self._chainGroup
+			)
+
+		if self._generatorChainSelector:
+			buffer += "\t<{xmlns}:generatorChainSelector>\n"
+			buffer += self._generatorChainSelector.ToXml(2)
+			buffer += "\t</{xmlns}:generatorChainSelector>\n"
+
+		if self._componentGeneratorSelector:
+			buffer += "\t<{xmlns}:componentGeneratorSelector>\n"
+			buffer += self._componentGeneratorSelector.ToXml(2)
+			buffer += "\t</{xmlns}:componentGeneratorSelector>\n"
+
+		if self._generator:
+			buffer += "\t<{xmlns}:generator>\n"
+			buffer += self._generator.ToXml(2)
+			buffer += "\t</{xmlns}:generator>\n"
+
+		buffer += dedent("""\
+			</{xmlns}:generatorChain>
+			""")
+
+		return buffer.format(xmlns=__DEFAULT_SCHEMA__.NamespacePrefix)
+
+
+@export
+class GeneratorChainSelector:
+	"""Represents an IP-XACT generator chain selector."""
+
+	def __init__(self):
+		pass
+
+	def ToXml(self, indent=0):
+		"""Converts the object's data into XML format."""
+
+		return ""
+
+
+@export
+class ComponentGeneratorSelector:
+	"""Represents an IP-XACT component generator selector."""
+
+	def __init__(self):
+		pass
+
+	def ToXml(self, indent=0):
+		"""Converts the object's data into XML format."""
+
+		return ""
+
+
+@export
+class Generator:
+	"""Represents an IP-XACT generator."""
+
+	def __init__(self):
+		pass
+
+	def ToXml(self, indent=0):
+		"""Converts the object's data into XML format."""
+
+		return ""
